@@ -1,0 +1,3 @@
+- insert:
+    - id: reply-and-side-chat
+      name: 'dsh-plugin-reply-and-side-chat'
