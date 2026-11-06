@@ -86,8 +86,12 @@ window.__ModuleLoader__.load({
     const ACCENT = '#4D6BFE';
     /** Exit animation length (ms); a closing toolbar or popover stays mounted this long. */
     const LEAVE_MS = 150;
-    /** CSS custom highlight carrying the reply underline. */
+    /** Lighter blue for a reply underline segment that directly follows another reply's segment, so the seam shows. */
+    const ACCENT_ALT = '#8FA2FF';
+    /** CSS custom highlights: pending reply underlines (two alternating shades) and the faded underline left by sent quotes. */
     const HIGHLIGHT = 'dsh-reply-quote';
+    const HIGHLIGHT_ALT = 'dsh-reply-quote-alt';
+    const HIGHLIGHT_SENT = 'dsh-reply-quote-sent';
     const ELEVATION = 'var(--dsw-elevation-prominent,0 0 0 .5px rgba(0,0,0,.16),0 3px 8px rgba(0,0,0,.04))';
 
     const STYLE_TEXT = `
@@ -112,7 +116,9 @@ window.__ModuleLoader__.load({
 .rsc-pop-close{position:absolute;top:8px;right:8px;width:24px;height:24px}
 .rsc-quote{border-left:3px solid var(--dsw-alias-border-l2);padding-left:8px;color:var(--dsw-alias-label-tertiary);white-space:pre-wrap;word-break:break-word;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
 .rsc-pop-row{display:flex;align-items:flex-end;gap:8px;margin-top:10px}
-.rsc-pop-text{flex:1;min-width:0;align-self:center;padding:2px 0;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto}
+.rsc-pop-text{flex:1;min-width:0;align-self:center;padding:2px 0;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow-y:auto}
+.rsc-pop-text,.rsc-pop textarea,.rsc-item-text{scrollbar-width:none}
+.rsc-pop-text::-webkit-scrollbar,.rsc-pop textarea::-webkit-scrollbar,.rsc-item-text::-webkit-scrollbar{display:none}
 .rsc-muted{color:var(--dsw-alias-label-tertiary)}
 .rsc-pop-actions{flex:none;display:flex;align-items:center;gap:2px}
 .rsc-pop textarea,.rsc-composer textarea{flex:1;min-width:0;resize:none;border:0;outline:0;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;padding:2px 0;max-height:160px}
@@ -120,6 +126,7 @@ window.__ModuleLoader__.load({
 .rsc-icon-btn{flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:var(--dsw-radius-md,8px);background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer}
 .rsc-icon-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}
 .rsc-icon-btn:disabled{opacity:.4;cursor:default}
+.rsc-icon-btn.rsc-danger:hover:not(:disabled){color:var(--dsw-alias-state-error-primary)}
 .rsc-error{margin-top:6px;color:var(--dsw-alias-state-error-primary);font-size:12px}
 .rsc-edit-actions{display:flex;justify-content:flex-end;gap:4px;margin-top:6px}
 .rsc-text-btn{border:0;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;font-size:12px;line-height:20px;padding:2px 10px;border-radius:var(--dsw-radius-sm,6px);cursor:pointer}
@@ -144,10 +151,12 @@ window.__ModuleLoader__.load({
 .rsc-item-no{flex:none;min-width:14px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}
 .rsc-item-body{flex:1;min-width:0}
 .rsc-label{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px}
-.rsc-item-text{margin-bottom:6px;white-space:pre-wrap;word-break:break-word;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+.rsc-item-text{margin-bottom:6px;white-space:pre-wrap;word-break:break-word;max-height:60px;overflow-y:auto}
 .rsc-item-text:last-child{margin-bottom:0}
 .rsc-item-actions{position:absolute;top:6px;right:8px;display:flex;gap:2px}
 ::highlight(${HIGHLIGHT}){text-decoration:underline wavy ${ACCENT};text-decoration-thickness:1.5px;text-underline-offset:3px}
+::highlight(${HIGHLIGHT_ALT}){text-decoration:underline wavy ${ACCENT_ALT};text-decoration-thickness:1.5px;text-underline-offset:3px}
+::highlight(${HIGHLIGHT_SENT}){text-decoration:underline wavy color-mix(in srgb,${ACCENT} 40%,transparent);text-decoration-thickness:1.5px;text-underline-offset:3px}
 html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover] [data-dsh-side-chat] *{cursor:pointer!important}
 .rsc-tab{width:100%;min-width:0;height:100%;min-height:0;display:flex;flex-direction:column}
 .rsc-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-secondary);font-size:14px}
@@ -156,6 +165,8 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
 .rsc-status.rsc-bad{color:var(--dsw-alias-state-error-primary)}
 .rsc-bubble-quote{display:block;border-left:3px solid var(--dsw-alias-border-l2);padding-left:8px;color:var(--dsw-alias-label-tertiary);white-space:pre-wrap;cursor:pointer;transition:color .12s,border-color .12s}
 .rsc-bubble-quote:hover{color:var(--dsw-alias-label-secondary);border-left-color:${ACCENT}}
+body[data-ds-dark-theme] .rsc-bubble-quote{color:var(--dsw-alias-label-secondary);border-left-color:var(--dsw-alias-label-tertiary)}
+body[data-ds-dark-theme] .rsc-bubble-quote:hover{color:var(--dsw-alias-label-primary);border-left-color:${ACCENT}}
 .rsc-bubble-reply{display:block;white-space:pre-wrap;margin-bottom:4px}
 [data-composer-chip="${SOURCE}"]{display:none!important}
 @media (prefers-reduced-motion:reduce){.rsc-anim,.rsc-anim.rsc-grow,.rsc-leaving .rsc-anim,.rsc-list-inner{animation:none}}
@@ -352,24 +363,108 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
         start?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
     }
-    /** Scroll to the latest visible occurrence of a sent quote above its bubble. */
-    function jumpToQuote(from, quote) {
+    /** Conversation that renders a sent quote bubble: a side chat body or the main column. */
+    function bubbleContainerOf(element) {
+      return element.closest('[data-dsh-side-chat], [data-conversation-session]');
+    }
+    /** Message text a sent quote can point at; the quote lines of sent bubbles never count. */
+    function isQuoteSource(node) {
+      return isMessageNode(node) && node.parentElement.closest('.rsc-bubble-quote') === null;
+    }
+    /** Latest visible occurrence of a sent quote above its bubble, outside the bubble's own message. */
+    function latestQuoteBefore(index, from, quote) {
       const needle = compact(quote);
-      const container = from.closest('[data-dsh-side-chat], [data-conversation-session]');
-      if (needle === '' || container === null) return;
+      if (needle === '') return null;
       const own = from.closest('[data-chat-flow-kind]');
-      const index = indexText(container, (node) => isMessageNode(node)
-        && (own === null || !own.contains(node))
-        && (from.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING) !== 0
-        && node.parentElement.closest('.rsc-bubble-quote') === null);
       const hits = findAll(index, needle);
       for (let i = hits.length - 1; i >= 0; i--) {
+        const node = index.nodes[hits[i]];
+        if (own !== null && own.contains(node)) continue;
+        if ((from.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING) === 0) continue;
         const range = rangeOf(index, hits[i], needle.length);
-        if (range.getClientRects().length > 0) {
-          scrollToRange(range);
-          return;
+        if (range.getClientRects().length > 0) return range;
+      }
+      return null;
+    }
+    /** Scroll to the text a sent quote points at; the faded underline marks the same place. */
+    function jumpToQuote(from, quote) {
+      const container = bubbleContainerOf(from);
+      if (container === null) return;
+      const range = latestQuoteBefore(indexText(container, isQuoteSource), from, quote);
+      if (range !== null) scrollToRange(range);
+    }
+    /** Ranges of the text every sent quote bubble on the page points at. */
+    function locateSentQuotes() {
+      const byContainer = new Map();
+      for (const bubble of document.querySelectorAll('.rsc-bubble-quote')) {
+        const container = bubbleContainerOf(bubble);
+        if (container === null) continue;
+        if (!byContainer.has(container)) byContainer.set(container, []);
+        byContainer.get(container).push(bubble);
+      }
+      const ranges = [];
+      for (const [container, bubbles] of byContainer) {
+        const index = indexText(container, isQuoteSource);
+        for (const bubble of bubbles) {
+          const range = latestQuoteBefore(index, bubble, bubble.textContent ?? '');
+          if (range !== null) ranges.push(range);
         }
       }
+      return ranges;
+    }
+
+    /** Document order of two boundary points. */
+    function comparePoints(a, b) {
+      const range = document.createRange();
+      range.setStart(a.node, a.offset);
+      return -range.comparePoint(b.node, b.offset);
+    }
+    function startOf(range) {
+      return { node: range.startContainer, offset: range.startOffset };
+    }
+    function endOf(range) {
+      return { node: range.endContainer, offset: range.endOffset };
+    }
+    /** Whether outer reaches from at or before inner's start to at or after its end. */
+    function covers(outer, inner) {
+      return outer.compareBoundaryPoints(Range.START_TO_START, inner) <= 0 && outer.compareBoundaryPoints(Range.END_TO_END, inner) >= 0;
+    }
+    /**
+     * Cut overlapping underlines so every character belongs to one reply: a reply inside another wins over the
+     * one containing it; of two crossing replies the newer one (higher `order`) wins the overlap.
+     * @param marks - located replies of one conversation, each `{ range, order }`.
+     * @returns owned segments in document order, `{ owner, range, layer }`; `layer` alternates where one
+     * reply's segment directly follows another's so the seam stays visible.
+     */
+    function splitMarks(marks) {
+      if (marks.length === 0) return [];
+      const points = marks.flatMap((mark) => [startOf(mark.range), endOf(mark.range)]).sort(comparePoints);
+      const stops = points.filter((point, i) => i === 0 || comparePoints(points[i - 1], point) !== 0);
+      const beats = (x, y) => {
+        const xInside = covers(y.range, x.range);
+        const yInside = covers(x.range, y.range);
+        return xInside !== yInside ? xInside : x.order > y.order;
+      };
+      const segments = [];
+      let joined = -1;
+      for (let i = 0; i + 1 < stops.length; i++) {
+        const range = document.createRange();
+        range.setStart(stops[i].node, stops[i].offset);
+        range.setEnd(stops[i + 1].node, stops[i + 1].offset);
+        const covering = marks.filter((mark) => covers(mark.range, range));
+        if (covering.length === 0) continue;
+        const owner = covering.find((x) => covering.every((y) => y === x || beats(x, y)))
+          ?? covering.reduce((a, b) => (b.order > a.order ? b : a));
+        const last = segments[segments.length - 1];
+        const touching = joined === i;
+        joined = i + 1;
+        if (touching && last.owner === owner) {
+          last.range.setEnd(stops[i + 1].node, stops[i + 1].offset);
+          continue;
+        }
+        segments.push({ owner, range, layer: touching ? 1 - last.layer : 0 });
+      }
+      return segments;
     }
 
     function QuoteNode({ node, t }) {
@@ -474,6 +569,17 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
     function isSubmitKey(event) {
       return event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229;
     }
+    /** Where a backward word deletion from the end of text stops: trailing blanks plus the last word. */
+    function wordStart(text) {
+      let end = text.length;
+      while (end > 0 && isBlank(text.charCodeAt(end - 1))) end--;
+      if (end === 0) return 0;
+      if (typeof Intl.Segmenter !== 'function') return text.slice(0, end).search(/\S+$/u);
+      let start = 0;
+      for (const part of new Intl.Segmenter(undefined, { granularity: 'word' }).segment(text.slice(0, end))) start = part.index;
+      return start;
+    }
+    const IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
     return {
       inject: ['slots', 'locale', 'sessions', 'uiWorkspace', 'sidebarRight', 'sidebarRightTabs', 'inputTriggers', 'uiConversation', 'conversation'],
@@ -523,21 +629,75 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
           for (const occurrence of state.occurrences) if (occurrence.offset + occurrence.length <= offset) detect -= occurrence.length - 1;
           return detect;
         }
+        /** Clipboard-projection offset of a detect-projection offset. */
+        function clipboardOffset(state, detect) {
+          let offset = detect;
+          for (const occurrence of state.occurrences) {
+            if (detectOffset(state, occurrence.offset) >= detect) break;
+            offset += occurrence.length - 1;
+          }
+          return offset;
+        }
+        /** Detect offset just past the last quote chip, or -1 without quotes. Quote chips lead the draft; the user's text starts here. */
+        function quotesEnd(state) {
+          const quotes = quoteOccurrences(state);
+          return quotes.length === 0 ? -1 : detectOffset(state, quotes[quotes.length - 1].offset) + 1;
+        }
+        function consumeSpan(target, start, end, draftRev) {
+          return end > start && target.actx.bail(target.actx, 'slash/input-consume-token', { guard: { kind: 'span', span: { start, end, draftRev } } }) === true;
+        }
+        /** The editor puts a space after every inserted chip; quote chips are hidden, so those spaces would only indent the user's text. */
+        function dropQuoteSpaces(target) {
+          for (let guard = 0; guard < 200; guard++) {
+            const state = target.input.state.getSnapshot();
+            const occurrence = quoteOccurrences(state).find((o) => state.draft[o.offset + o.length] === ' ');
+            if (occurrence === undefined) return;
+            const start = detectOffset(state, occurrence.offset) + 1;
+            if (!consumeSpan(target, start, start + 1, state.draftRev)) return;
+          }
+        }
         function addQuote(sessionId, value) {
           const target = inputOf(sessionId);
           if (target === undefined) return false;
           const state = target.input.state.getSnapshot();
           const quotes = quoteOccurrences(state);
-          let at = 0;
-          if (quotes.length > 0) {
-            const last = quotes[quotes.length - 1];
-            at = last.offset + last.length;
-            if (state.draft[at] === ' ') at += 1;
-          }
+          const at = quotes.length === 0 ? 0 : quotes[quotes.length - 1].offset + quotes[quotes.length - 1].length;
           const detect = detectOffset(state, at);
           const applied = target.input.insertReference(quoteInsert(value), { start: detect, end: detect, draftRev: state.draftRev });
-          if (applied) target.input.focus();
+          if (applied) {
+            dropQuoteSpaces(target);
+            target.input.focus();
+          }
           return applied;
+        }
+        /**
+         * Keep one deletion in a composer away from its quote chips.
+         * @param span - the editor selection in detect coordinates.
+         * @param backward - Backspace direction.
+         * @param unit - how much a collapsed caret deletes: `char`, `word` or `line`.
+         * @returns true when the default deletion must not run: refused, or done here without the chips.
+         */
+        function guardDeletion(sessionId, span, backward, unit) {
+          const target = inputOf(sessionId);
+          if (target === undefined) return false;
+          const state = target.input.state.getSnapshot();
+          const end = quotesEnd(state);
+          if (end < 0) return false;
+          if (span.start !== span.end) {
+            if (span.start >= end) return false;
+            consumeSpan(target, end, span.end, state.draftRev);
+            return true;
+          }
+          const caret = span.start;
+          if (caret < end || (backward && caret === end)) return true;
+          if (!backward || unit === 'char') return false;
+          // Word and line deletions on the chips' line would sweep the hidden chips along; cut them short here.
+          const from = clipboardOffset(state, end);
+          const before = state.draft.slice(from, clipboardOffset(state, caret));
+          if (before.includes('\n')) return false;
+          const start = unit === 'line' ? end : detectOffset(state, from + wordStart(before));
+          consumeSpan(target, Math.max(start, end), caret, state.draftRev);
+          return true;
         }
         function chipSpan(state, occurrence, withSpace) {
           const start = detectOffset(state, occurrence.offset);
@@ -553,7 +713,9 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
           const state = target.input.state.getSnapshot();
           const occurrence = findOccurrence(state, occurrenceId);
           if (occurrence === undefined) return false;
-          return target.input.insertReference(quoteInsert({ ...decodeRef(occurrence.ref), reply }), chipSpan(state, occurrence, false));
+          const applied = target.input.insertReference(quoteInsert({ ...decodeRef(occurrence.ref), reply }), chipSpan(state, occurrence, false));
+          if (applied) dropQuoteSpaces(target);
+          return applied;
         }
         function removeQuote(sessionId, occurrenceId) {
           const target = inputOf(sessionId);
@@ -791,7 +953,7 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
           const shakeRef = useRef(null);
           /** Whether the compose popover holds typed text. */
           const dirtyRef = useRef(false);
-          /** Underlined quotes as last located: `{ sessionId, occurrenceId, range }`. */
+          /** Underlined pending quotes as last located: `{ sessionId, occurrenceId, quote, range, segments }`; clicks hit `segments`, the parts this reply owns. */
           const marksRef = useRef([]);
           /** Last seen saved reply of the open popover, so it can still fade out after being deleted. */
           const shownRef = useRef(undefined);
@@ -820,19 +982,21 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
             const shake = () => shakeRef.current?.animate?.(SHAKE, { duration: 360, easing: 'ease-in-out' });
             const markAt = (x, y) => {
               for (const mark of marksRef.current) {
-                for (const r of mark.range.getClientRects()) if (x >= r.left - 1 && x <= r.right + 1 && y >= r.top && y <= r.bottom + 5) return mark;
+                for (const segment of mark.segments) {
+                  for (const r of segment.getClientRects()) if (x >= r.left - 1 && x <= r.right + 1 && y >= r.top && y <= r.bottom + 5) return mark;
+                }
               }
               return undefined;
             };
-            const openMark = (mark, x) => {
+            const openMark = (mark, x, kind = 'view', id = ++modeSeq) => {
               const rect = mark.range.getBoundingClientRect();
-              show({ id: ++modeSeq, kind: 'view', sessionId: mark.sessionId, occurrenceId: mark.occurrenceId, column: columnOf(mark.range.startContainer), dx: (x ?? rect.left + rect.width / 2) - rect.left });
+              show({ id, kind, sessionId: mark.sessionId, occurrenceId: mark.occurrenceId, column: columnOf(mark.range.startContainer), dx: (x ?? rect.left + rect.width / 2) - rect.left });
             };
             return { guarded, show, close, shake, markAt, openMark };
           }, []);
 
           useEffect(() => {
-            layer.openQuote = (sessionId, occurrenceId, fallback) => {
+            layer.openQuote = (sessionId, occurrenceId, fallback, kind = 'view') => {
               if (api.guarded(modeRef.current)) {
                 api.shake();
                 return;
@@ -840,13 +1004,13 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
               const mark = marksRef.current.find((m) => m.sessionId === sessionId && m.occurrenceId === occurrenceId);
               if (mark !== undefined) {
                 scrollToRange(mark.range);
-                api.openMark(mark);
+                api.openMark(mark, undefined, kind);
                 return;
               }
               // The quoted text is not on the page: open above the reply summary instead.
               if (fallback === null || fallback === undefined) return;
               const rect = fallback.getBoundingClientRect();
-              api.show({ id: ++modeSeq, kind: 'view', sessionId, occurrenceId, fallback, column: columnOf(fallback), dx: rect.width / 2 });
+              api.show({ id: ++modeSeq, kind, sessionId, occurrenceId, fallback, column: columnOf(fallback), dx: rect.width / 2 });
             };
             return () => {
               layer.openQuote = undefined;
@@ -903,12 +1067,15 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
             const onKeyUp = (event) => {
               if (event.shiftKey || event.key === 'Shift') evaluate();
             };
+            // Esc closes every state, unsaved text included: it is the deliberate way out, like the close or cancel button.
             const onKeyDown = (event) => {
-              if (event.key !== 'Escape') return;
+              if (event.key !== 'Escape' || event.isComposing) return;
               const current = modeRef.current;
               if (current === null || current.leaving) return;
-              if (api.guarded(current)) api.shake();
-              else api.close();
+              api.close();
+              if (current.kind === 'toolbar') return;
+              event.preventDefault();
+              event.stopPropagation();
             };
             const onSelectionChange = () => {
               if (modeRef.current?.kind !== 'toolbar' || press !== null) return;
@@ -955,25 +1122,46 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
             };
           }, []);
 
-          // Underline every pending quote of the conversations on screen; re-locate after the DOM settles.
+          // Underline every pending quote of the conversations on screen, plus the faded line sent quotes leave behind;
+          // re-locate after the DOM settles.
           useEffect(() => {
             if (window.CSS?.highlights === undefined || typeof window.Highlight !== 'function') return undefined;
             let timer = 0;
+            let sentCount = 0;
+            const setHighlight = (name, ranges, priority) => {
+              if (ranges.length === 0) {
+                window.CSS.highlights.delete(name);
+                return;
+              }
+              const highlight = new window.Highlight(...ranges);
+              highlight.priority = priority;
+              window.CSS.highlights.set(name, highlight);
+            };
             const paint = () => {
               timer = 0;
               const marks = [];
+              const layers = [[], []];
               for (const [sessionId, quotes] of quoteBook.get()) {
                 const container = containerOf(sessionId);
                 if (container === null) continue;
                 const cache = {};
-                for (const quote of quotes) {
+                const located = [];
+                quotes.forEach((quote, order) => {
                   const range = locateQuote(container, quote, cache);
-                  if (range !== null) marks.push({ sessionId, occurrenceId: quote.occurrenceId, range });
+                  if (range !== null) located.push({ sessionId, occurrenceId: quote.occurrenceId, quote: quote.quote, range, order, segments: [] });
+                });
+                for (const segment of splitMarks(located)) {
+                  segment.owner.segments.push(segment.range);
+                  layers[segment.layer].push(segment.range);
                 }
+                marks.push(...located);
               }
+              const sent = locateSentQuotes();
+              sentCount = sent.length;
               marksRef.current = marks;
-              if (marks.length === 0) window.CSS.highlights.delete(HIGHLIGHT);
-              else window.CSS.highlights.set(HIGHLIGHT, new window.Highlight(...marks.map((mark) => mark.range)));
+              setHighlight(HIGHLIGHT, layers[0], 1);
+              setHighlight(HIGHLIGHT_ALT, layers[1], 1);
+              setHighlight(HIGHLIGHT_SENT, sent, 0);
               const kind = modeRef.current?.kind;
               if (kind === 'view' || kind === 'edit') setTick((n) => n + 1);
             };
@@ -981,7 +1169,7 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
               if (timer === 0) timer = setTimeout(paint, 150);
             };
             const observer = new MutationObserver((records) => {
-              if (quoteBook.get().size === 0 && marksRef.current.length === 0) return;
+              if (quoteBook.get().size === 0 && marksRef.current.length === 0 && sentCount === 0 && document.querySelector('.rsc-bubble-quote') === null) return;
               for (const record of records) {
                 const element = elementOf(record.target);
                 if (element !== null && element.closest('.rsc-layer, [data-composer-card]') !== null) continue;
@@ -997,7 +1185,7 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
               observer.disconnect();
               clearTimeout(timer);
               marksRef.current = [];
-              window.CSS.highlights.delete(HIGHLIGHT);
+              for (const name of [HIGHLIGHT, HIGHLIGHT_ALT, HIGHLIGHT_SENT]) window.CSS.highlights.delete(name);
             };
           }, []);
 
@@ -1040,7 +1228,20 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
                 },
               }, t('toolbar.sideChat')),
               h('span', { className: 'rsc-sep' }),
-              h('button', { type: 'button', onClick: () => api.show({ ...mode, kind: 'compose' }) }, t('toolbar.reply')));
+              h('button', {
+                type: 'button',
+                onClick: () => {
+                  // Exactly the text of a pending reply again: edit that reply rather than adding a twin.
+                  const twin = marksRef.current.find((mark) => mark.sessionId === mode.target.sessionId
+                    && compact(mark.quote) === compact(mode.text) && covers(mode.range, mark.range));
+                  if (twin === undefined) {
+                    api.show({ ...mode, kind: 'compose' });
+                    return;
+                  }
+                  api.openMark(twin, rect.left + mode.dx, 'edit', mode.id);
+                  clearSelection();
+                },
+              }, t('toolbar.reply')));
           } else if (mode.kind === 'compose') {
             body = h(ComposePopover, {
               t,
@@ -1133,7 +1334,7 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
                 h('div', { className: `rsc-pop-text${empty ? ' rsc-muted' : ''}` }, empty ? t('reply.empty') : value.reply),
                 h('div', { className: 'rsc-pop-actions' },
                   h('button', { type: 'button', className: 'rsc-icon-btn', title: t('reply.edit'), 'aria-label': t('reply.edit'), onClick: onEdit }, h(Icon, { d: ICON_EDIT })),
-                  h('button', { type: 'button', className: 'rsc-icon-btn', title: t('reply.delete'), 'aria-label': t('reply.delete'), onClick: onDelete }, h(Icon, { d: ICON_TRASH })))));
+                  h('button', { type: 'button', className: 'rsc-icon-btn rsc-danger', title: t('reply.delete'), 'aria-label': t('reply.delete'), onClick: onDelete }, h(Icon, { d: ICON_TRASH })))));
         }
         function EditRow({ t, initial, onCancel, onSave }) {
           const [reply, setReply] = useState(initial);
@@ -1174,7 +1375,7 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
         // ------------------------------------------------ reply summary inside the composer card
 
         /** "N replies" above the editor; hovering opens the detail list upward. Also publishes the quotes for underlining. */
-        function QuoteSummary({ sessionId, useInput, t }) {
+        function QuoteSummary({ sessionId, useInput, inputActions, t }) {
           const occurrences = useInput((state) => state.occurrences);
           // The hidden chips keep the draft non-empty, so the host drops its placeholder; this one stands in for it.
           const blank = useInput((state) => {
@@ -1196,9 +1397,60 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
           useEffect(() => () => quoteBook.set(sessionId, []), [sessionId]);
           const [open, setOpen] = useState(false);
           const timer = useRef(0);
+          const rootRef = useRef(null);
           const chipRef = useRef(null);
           useEffect(() => () => clearTimeout(timer.current), []);
-          if (quotes.length === 0) return null;
+          const hasQuotes = quotes.length > 0;
+          // The hidden chips stay out of the user's reach: the caret never lands before them and deletions stop at them.
+          useEffect(() => {
+            if (!hasQuotes || typeof inputActions?.captureInsertion !== 'function') return undefined;
+            const editorOf = () => rootRef.current?.closest('[data-composer-card]')?.querySelector('[data-composer-input]') ?? null;
+            const inEditor = (node) => {
+              const editor = editorOf();
+              return editor !== null && node instanceof Node && editor.contains(node);
+            };
+            const guard = (event, backward, unit) => {
+              if (!guardDeletion(sessionId, inputActions.captureInsertion(), backward, unit)) return;
+              event.preventDefault();
+              event.stopPropagation();
+            };
+            const onKeyDown = (event) => {
+              if ((event.key !== 'Backspace' && event.key !== 'Delete') || event.isComposing || event.keyCode === 229 || !inEditor(event.target)) return;
+              const unit = IS_MAC ? (event.metaKey ? 'line' : event.altKey ? 'word' : 'char') : (event.ctrlKey ? 'word' : 'char');
+              guard(event, event.key === 'Backspace', unit);
+            };
+            const onBeforeInput = (event) => {
+              const type = event.inputType ?? '';
+              if (!type.startsWith('delete') || !inEditor(event.target)) return;
+              guard(event, type.includes('Backward'), type.includes('Word') ? 'word' : type.includes('Line') ? 'line' : 'char');
+            };
+            const onSelectionChange = () => {
+              const editor = editorOf();
+              const selection = window.getSelection();
+              if (editor === null || selection === null || selection.rangeCount === 0 || !editor.contains(selection.focusNode)) return;
+              const chips = editor.querySelectorAll(`[data-composer-chip="${SOURCE}"]`);
+              if (chips.length === 0) return;
+              const floor = document.createRange();
+              floor.setStartAfter(chips[chips.length - 1]);
+              const below = (node, offset) => editor.contains(node) && floor.comparePoint(node, offset) < 0;
+              const anchorBelow = below(selection.anchorNode, selection.anchorOffset);
+              const focusBelow = below(selection.focusNode, selection.focusOffset);
+              if (!anchorBelow && !focusBelow) return;
+              selection.setBaseAndExtent(
+                anchorBelow ? floor.startContainer : selection.anchorNode, anchorBelow ? floor.startOffset : selection.anchorOffset,
+                focusBelow ? floor.startContainer : selection.focusNode, focusBelow ? floor.startOffset : selection.focusOffset);
+            };
+            document.addEventListener('keydown', onKeyDown, true);
+            document.addEventListener('beforeinput', onBeforeInput, true);
+            document.addEventListener('selectionchange', onSelectionChange);
+            onSelectionChange();
+            return () => {
+              document.removeEventListener('keydown', onKeyDown, true);
+              document.removeEventListener('beforeinput', onBeforeInput, true);
+              document.removeEventListener('selectionchange', onSelectionChange);
+            };
+          }, [hasQuotes, sessionId, inputActions]);
+          if (!hasQuotes) return null;
           const enter = () => {
             clearTimeout(timer.current);
             setOpen(true);
@@ -1207,7 +1459,7 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
             clearTimeout(timer.current);
             timer.current = setTimeout(() => setOpen(false), 160);
           };
-          return h('div', { className: 'rsc-replies', 'data-rsc-blank': blank ? '' : undefined, onMouseEnter: enter, onMouseLeave: leave, onFocus: enter, onBlur: leave },
+          return h('div', { ref: rootRef, className: 'rsc-replies', 'data-rsc-blank': blank ? '' : undefined, onMouseEnter: enter, onMouseLeave: leave, onFocus: enter, onBlur: leave },
             h(Style),
             open ? h('div', { className: 'rsc-list' }, h('div', { className: 'rsc-list-inner', role: 'list' }, quotes.map((quote, i) => h('div', { key: quote.occurrenceId, className: 'rsc-item', role: 'listitem' },
               h('span', { className: 'rsc-item-no' }, String(i + 1)),
@@ -1225,12 +1477,12 @@ html[data-rsc-mark-hover] [data-conversation-session] *,html[data-rsc-mark-hover
                   'aria-label': t('reply.edit'),
                   onClick: () => {
                     setOpen(false);
-                    layer.openQuote?.(sessionId, quote.occurrenceId, chipRef.current);
+                    layer.openQuote?.(sessionId, quote.occurrenceId, chipRef.current, 'edit');
                   },
                 }, h(Icon, { d: ICON_EDIT, size: 15 })),
                 h('button', {
                   type: 'button',
-                  className: 'rsc-icon-btn',
+                  className: 'rsc-icon-btn rsc-danger',
                   title: t('reply.delete'),
                   'aria-label': t('reply.delete'),
                   onClick: () => removeQuote(sessionId, quote.occurrenceId),

@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-reply-and-side-chat",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Reply to selected conversation text and open side chats that fork the current session.",
   "type": "module",
   "exports": {
