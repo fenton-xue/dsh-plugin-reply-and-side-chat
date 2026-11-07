@@ -94,15 +94,4 @@ npm 包名：`dsh-plugin-reply-and-side-chat`。在 dsh Web 的「插件」页�
 - **侧边聊天零污染**：只读继承上下文，主会话没有任何新增消息，也不留在会话列表里。
 - **贴合宿主外观**：只用宿主主题变量，亮色和暗色主题都正常；界面文案提供中文和英文；插件停用后浮层和监听全部移除。
 
-## 已知限制
-
-- 选区只在主对话区和侧边聊天里生效，子代理侧栏等其他区域不触发。
-- 波浪线和气泡跳转靠文本匹配定位：同一回合里有多处相同文字时取最近的一处，原文被改写或分页收起时找不到，不影响回复本身。
-- 部分样式依赖宿主的 DOM 属性和类名（如 `data-composer-card`、`data-chat-turn`），dsh 升级后可能需要适配。
-- 归档不是删除：分叉会话会留在「已归档」里和磁盘上。
-
 完整的需求和验证记录见 [REQUIREMENTS.md](REQUIREMENTS.md)。
-
-## 开发与同步
-
-本仓库同时以 git subtree 的形式存放在 [my-dsh-plugin](https://github.com/fenton-xue/my-dsh-plugin) 的 `plugins/reply-and-side-chat/` 下，两边通过该仓库的 `tools/sync-plugin.sh push|pull` 同步。
